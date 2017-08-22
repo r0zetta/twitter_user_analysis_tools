@@ -88,12 +88,13 @@ if __name__ == '__main__':
         previous_tweet_time = current_tweet_time
 
 # get all tweet texts
-        created_minute = status.created_at.minute
-        created_hour = status.created_at.hour
+        created_second = "%02d" % status.created_at.second
+        created_minute = "%02d" % status.created_at.minute
+        created_hour = "%02d" % status.created_at.hour
         created_day = status.created_at.day
         created_month = status.created_at.month
         created_year = status.created_at.year
-        date_string = str(created_year) + "/" + str(created_month) + "/" + str(created_day) + " " + str(created_hour) + ":" + str(created_minute)
+        date_string = str(created_year) + "/" + str(created_month) + "/" + str(created_day) + " " + str(created_hour) + ":" + str(created_minute) + ":" + str(created_second)
         text = status.text
         text = text.replace('\n', ' ').replace('\r', '')
         entry = date_string + " | " + status.text + "\n"
