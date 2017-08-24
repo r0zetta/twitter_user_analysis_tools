@@ -19,6 +19,9 @@ data = {}
 target = "@r0zetta"
 output_dir = "captures/"
 
+def time_string_to_object(time_string):
+    return datetime.strptime(time_string, '%Y-%m-%d %H:%M:%S')
+
 def increment_counter(label, name):
     global data
     if label not in data:
@@ -73,6 +76,15 @@ if __name__ == '__main__':
     created_month = "%02d" % item.created_at.month
     created_year = item.created_at.year
     creation_date = str(created_day) + "/" + str(created_month) + "/" + str(created_year) + " - " + str(created_hour) + ":" + str(created_minute) + ":" + str(created_second)
+
+    created_date = item.created_at
+    delta = datetime.today() - created_date
+    account_age_days = delta.days
+    tweets_per_day = 0
+    tweets_per_hour = 0
+    if account_age_days > 0:
+        tweets_per_day = float(tweets)/float(account_age_days)
+        tweets_per_hour = float(tweets)/float(account_age_days * 24)
 
     previous_tweet_time = None
     for status in Cursor(auth_api.user_timeline, id=target).items():
@@ -221,6 +233,8 @@ if __name__ == '__main__':
     handle.write(u"Following: " + unicode(following) + u"\n")
     handle.write(u"Followers: " + unicode(followers) + u"\n")
     handle.write(u"Created: " + unicode(creation_date) + u"\n")
+    handle.write(u"Tweets per hour: " + unicode(tweets_per_hour) + u"\n")
+    handle.write(u"Tweets per day: " + unicode(tweets_per_day) + u"\n")
     data_string = output_data()
     handle.write(data_string)
     handle.close()
