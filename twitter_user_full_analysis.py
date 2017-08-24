@@ -66,9 +66,13 @@ if __name__ == '__main__':
     lists = str(item.listed_count)
     following = str(item.friends_count)
     followers = str(item.followers_count)
-    created_month = item.created_at.month
+    created_second = "%02d" % item.created_at.second
+    created_minute = "%02d" % item.created_at.minute
+    created_hour = "%02d" % item.created_at.hour
+    created_day = "%02d" % item.created_at.day
+    created_month = "%02d" % item.created_at.month
     created_year = item.created_at.year
-    creation_date = str(created_month) + "/" + str(created_year)
+    creation_date = str(created_day) + "/" + str(created_month) + "/" + str(created_year) + " - " + str(created_hour) + ":" + str(created_minute) + ":" + str(created_second)
 
     previous_tweet_time = None
     for status in Cursor(auth_api.user_timeline, id=target).items():
