@@ -29,7 +29,7 @@ def increment_counter(label, name):
 
 def output_data():
     output_string = ""
-    for label, stuff in data.iteritems():
+    for label, stuff in sorted(data.iteritems()):
         output_string += u"\n" + label.encode('utf-8') + u":\n\n"
         for item, count in sorted(stuff.iteritems()):
             output_string += unicode(count) + u": " + unicode(item) + u"\n"
@@ -110,6 +110,7 @@ if __name__ == '__main__':
         if hasattr(status, 'lang'):
             increment_counter("languages", status.lang)
 
+        retweeted = False
         if hasattr(status, 'retweeted_status'):
             orig_tweet = status.retweeted_status
             if hasattr(orig_tweet, 'user'):
@@ -129,6 +130,7 @@ if __name__ == '__main__':
                             quoted_user = orig_tweet['user']['screen_name']
                             increment_counter("quoted", quoted_user)
                             increment_counter("quote_tweets", "count")
+                            retweeted = True
 
         if hasattr(status, 'entities'):
             entities = status.entities
@@ -137,19 +139,28 @@ if __name__ == '__main__':
                     if item is not None:
                         tag = item['text']
                         if tag is not None:
-                            increment_counter("hashtags", tag.lower())
+                            if retweeted is True:
+                                increment_counter("retweeted_hashtags", tag.lower())
+                            else:
+                                increment_counter("hashtags", tag.lower())
             if 'urls' in entities:
                 for item in entities['urls']:
                     if item is not None:
                         url = item['expanded_url']
                         if url is not None:
-                            increment_counter("urls", url)
+                            if retweeted is True:
+                                increment_counter("retweeted_urls", url)
+                            else:
+                                increment_counter("urls", url)
             if 'user_mentions' in entities:
                 for item in entities['user_mentions']:
                     if item is not None:
                         mention = item['screen_name']
                         if mention is not None:
-                            increment_counter("mentions", mention)
+                            if retweeted is True:
+                                increment_counter("retweeted_mentions", mention)
+                            else:
+                                increment_counter("mentions", mention)
 
 # get user agents
         increment_counter("sources", status.source)
