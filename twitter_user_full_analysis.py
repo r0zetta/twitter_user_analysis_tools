@@ -14,20 +14,26 @@ import re
 import os
 import io
 
-"""
-response = unirest.post("https://osome-botometer.p.mashape.com/2/check_account",
-  headers={
-    "X-Mashape-Key": "dHKciNZ54Smsh8d51b7U7dpFSoaQp1dAWjwjsnmtFG3yrwcthq",
-    "Content-Type": "application/json",
-    "Accept": "application/json"
-  },
-  params=("{\"user\":{\"id\":\"1234567890\",\"screen_name\":\"IUNetSci\"},\"timeline\":[{\"id\":1234567890,\"text\":\"@Botometer is so cool!\",\"...\":\"...\"},\"...\"],\"mentions\":[{\"id\":9876543210,\"text\":\"@TruthyAtIndiana is also cool!\",\"...\":\"...\"},\"...\"]}")
-)
-"""
-
 count = 1
+data = {}
 target = "@r0zetta"
 output_dir = "captures/"
+
+def increment_counter(label, name):
+    global data
+    if label not in data:
+        data[label] = {}
+    if name not in data[label]:
+        data[label][name] = 0
+    data[label][name] += 1
+
+def output_data():
+    output_string = ""
+    for label, stuff in data.iteritems():
+        output_string += u"\n" + label.encode('utf-8') + u":\n\n"
+        for item, count in sorted(stuff.iteritems()):
+            output_string += unicode(count) + u": " + unicode(item) + u"\n"
+    return output_string
 
 if __name__ == '__main__':
     consumer_key, consumer_secret, access_token, access_token_secret = get_account_credentials()
@@ -63,8 +69,6 @@ if __name__ == '__main__':
     created_month = item.created_at.month
     created_year = item.created_at.year
     creation_date = str(created_month) + "/" + str(created_year)
-    #following_list = auth_api.friends_ids(target)
-    #followers_list = auth_api.followers_ids(target)
 
     previous_tweet_time = None
     for status in Cursor(auth_api.user_timeline, id=target).items():
@@ -100,16 +104,60 @@ if __name__ == '__main__':
         entry = date_string + " | " + status.text + "\n"
         tweet_texts.append(entry)
 
+        if hasattr(status, 'in_reply_to_screen_name'):
+            increment_counter("replied_to", status.in_reply_to_screen_name)
+
+        if hasattr(status, 'lang'):
+            increment_counter("languages", status.lang)
+
+        if hasattr(status, 'retweeted_status'):
+            orig_tweet = status.retweeted_status
+            if hasattr(orig_tweet, 'user'):
+                if orig_tweet.user is not None:
+                    if hasattr(orig_tweet.user, "screen_name"):
+                        if orig_tweet.user.screen_name is not None:
+                            retweeted_user = orig_tweet.user.screen_name
+                            increment_counter("retweeted", retweeted_user)
+                            increment_counter("retweets", "count")
+
+        if hasattr(status, 'quoted_status'):
+            orig_tweet = status.quoted_status
+            if 'user' in orig_tweet:
+                if orig_tweet['user'] is not None:
+                    if "screen_name" in orig_tweet['user']:
+                        if orig_tweet['user']['screen_name'] is not None:
+                            quoted_user = orig_tweet['user']['screen_name']
+                            increment_counter("quoted", quoted_user)
+                            increment_counter("quote_tweets", "count")
+
+        if hasattr(status, 'entities'):
+            entities = status.entities
+            if 'hashtags' in entities:
+                for item in entities['hashtags']:
+                    if item is not None:
+                        tag = item['text']
+                        if tag is not None:
+                            increment_counter("hashtags", tag.lower())
+            if 'urls' in entities:
+                for item in entities['urls']:
+                    if item is not None:
+                        url = item['expanded_url']
+                        if url is not None:
+                            increment_counter("urls", url)
+            if 'user_mentions' in entities:
+                for item in entities['user_mentions']:
+                    if item is not None:
+                        mention = item['screen_name']
+                        if mention is not None:
+                            increment_counter("mentions", mention)
+
 # get user agents
-        source = status.source
-        if source not in sources:
-            sources[source] = 1
-        else:
-            sources[source] += 1
+        increment_counter("sources", status.source)
 
         sys.stdout.write("#")
         sys.stdout.flush()
 
+    print
     print "All done. Processed " + str(tweet_count) + " tweets."
     print
 
@@ -148,19 +196,18 @@ if __name__ == '__main__':
 
     filename = output_dir + target.encode('utf-8') + "-details.txt"
     print "Writing file: " + filename
-    handle = open(filename, 'w')
-    handle.write("User name: " + name.encode('utf-8') + "\n")
-    handle.write("Screen name: @" + screen_name.encode('utf-8') + "\n")
-    handle.write("User id: " + user_id + "\n")
-    handle.write("Tweets: " + tweets + "\n")
-    handle.write("Likes: " + likes + "\n")
-    handle.write("Lists: " + lists + "\n")
-    handle.write("Following: " + following + "\n")
-    handle.write("Followers: " + followers + "\n")
-    handle.write("Created: " + creation_date + "\n")
-    handle.write("Sources:\n")
-    for source, count in sources.iteritems():
-        handle.write(source + ": " + str(count) + "\n")
+    handle = io.open(filename, 'w', encoding='utf-8')
+    handle.write(u"User name: " + name.encode('utf-8') + u"\n")
+    handle.write(u"Screen name: @" + screen_name.encode('utf-8') + u"\n")
+    handle.write(u"User id: " + unicode(user_id) + u"\n")
+    handle.write(u"Tweets: " + unicode(tweets) + u"\n")
+    handle.write(u"Likes: " + unicode(likes) + u"\n")
+    handle.write(u"Lists: " + unicode(lists) + u"\n")
+    handle.write(u"Following: " + unicode(following) + u"\n")
+    handle.write(u"Followers: " + unicode(followers) + u"\n")
+    handle.write(u"Created: " + unicode(creation_date) + u"\n")
+    data_string = output_data()
+    handle.write(data_string)
     handle.close()
 
 
