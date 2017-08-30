@@ -87,8 +87,12 @@ if __name__ == '__main__':
         tweets_per_hour = float(tweets)/float(account_age_days * 24)
 
     previous_tweet_time = None
+    tweets = 0
+    retweets = 0
+    replies = 0
     for status in Cursor(auth_api.user_timeline, id=target).items():
         tweet_count = tweet_count + 1
+        tweets += 1
 
 # create heatmap
         tweet_time = status.created_at
@@ -121,7 +125,9 @@ if __name__ == '__main__':
         tweet_texts.append(entry)
 
         if hasattr(status, 'in_reply_to_screen_name'):
-            increment_counter("replied_to", status.in_reply_to_screen_name)
+            if status.in_reply_to_screen_name is not None:
+                increment_counter("replied_to", status.in_reply_to_screen_name)
+                replies += 1
 
         if hasattr(status, 'lang'):
             increment_counter("languages", status.lang)
@@ -136,6 +142,7 @@ if __name__ == '__main__':
                             retweeted_user = orig_tweet.user.screen_name
                             increment_counter("retweeted", retweeted_user)
                             increment_counter("retweets", "count")
+                            retweets += 1
 
         if hasattr(status, 'quoted_status'):
             orig_tweet = status.quoted_status
@@ -224,7 +231,7 @@ if __name__ == '__main__':
     filename = output_dir + target.encode('utf-8') + "-details.txt"
     print "Writing file: " + filename
     handle = io.open(filename, 'w', encoding='utf-8')
-    handle.write(u"User name: " + name.encode('utf-8') + u"\n")
+#    handle.write(u"User name: " + name.encode('utf-8') + u"\n")
     handle.write(u"Screen name: @" + screen_name.encode('utf-8') + u"\n")
     handle.write(u"User id: " + unicode(user_id) + u"\n")
     handle.write(u"Tweets: " + unicode(tweets) + u"\n")
@@ -235,6 +242,9 @@ if __name__ == '__main__':
     handle.write(u"Created: " + unicode(creation_date) + u"\n")
     handle.write(u"Tweets per hour: " + unicode(tweets_per_hour) + u"\n")
     handle.write(u"Tweets per day: " + unicode(tweets_per_day) + u"\n")
+    handle.write(u"Tweets analyzed: " + unicode(tweets) + u"\n")
+    handle.write(u"Retweets: " + unicode(retweets) + u"\n")
+    handle.write(u"Replies: " + unicode(replies) + u"\n")
     data_string = output_data()
     handle.write(data_string)
     handle.close()
