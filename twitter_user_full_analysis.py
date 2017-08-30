@@ -92,7 +92,6 @@ if __name__ == '__main__':
     replies = 0
     for status in Cursor(auth_api.user_timeline, id=target).items():
         tweet_count = tweet_count + 1
-        tweets += 1
 
 # create heatmap
         tweet_time = status.created_at
@@ -242,7 +241,7 @@ if __name__ == '__main__':
     handle.write(u"Created: " + unicode(creation_date) + u"\n")
     handle.write(u"Tweets per hour: " + unicode(tweets_per_hour) + u"\n")
     handle.write(u"Tweets per day: " + unicode(tweets_per_day) + u"\n")
-    handle.write(u"Tweets analyzed: " + unicode(tweets) + u"\n")
+    handle.write(u"Tweets analyzed: " + unicode(tweet_count) + u"\n")
     handle.write(u"Retweets: " + unicode(retweets) + u"\n")
     handle.write(u"Replies: " + unicode(replies) + u"\n")
     data_string = output_data()
